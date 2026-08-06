@@ -15,6 +15,7 @@
         'admin' => [
             ['Dashboard', 'admin.dashboard', 'bi-speedometer2'],
             ['Employees', 'admin.employees', 'bi-people'],
+            ['Roster / Duty', 'admin.roster', 'bi-calendar-range'],
             ['Payroll', 'admin.payroll', 'bi-cash-stack'],
             ['Tax & PF', 'admin.taxpf', 'bi-percent'],
             ['Loans', 'admin.loans', 'bi-credit-card'],

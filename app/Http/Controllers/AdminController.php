@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\AttendanceRecord;
 use App\Models\Bonus;
+use App\Models\Department;
+use App\Models\Designation;
 use App\Models\HrQuery;
 use App\Models\Increment;
 use App\Models\LeaveRequest;
@@ -12,6 +14,8 @@ use App\Models\Loan;
 use App\Models\Payslip;
 use App\Models\Product;
 use App\Models\Settlement;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
 use App\Models\SiteInquiry;
 use App\Models\User;
 use Carbon\Carbon;
@@ -307,19 +311,167 @@ class AdminController extends Controller
             });
         });
 
+        $departments = Department::orderBy('name')->pluck('name');
+        $designations = Designation::orderBy('name')->pluck('name');
+
         return view('admin.employees', compact('employees', 'departments', 'designations'));
     }
 
     public function createEmployee(): View
     {
-        $departments = User::whereNotNull('department')->distinct()->pluck('department');
-        $designations = User::whereNotNull('job_title')->distinct()->pluck('job_title');
+        $departments = Department::orderBy('name')->pluck('name');
+        $designations = Designation::orderBy('name')->pluck('name');
 
         return view('admin.employee-create', compact('departments', 'designations'));
     }
 
+    public function departments(): View
+    {
+        $departments = Department::orderBy('name')->get();
+        $designations = Designation::orderBy('name')->get();
+
+        return view('admin.departments', compact('departments', 'designations'));
+    }
+
+    public function storeDepartment(Request $request)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:departments,name']);
+        Department::create(['name' => trim($request->name)]);
+
+        return back()->with('success', 'Department created successfully.');
+    }
+
+    public function updateDepartment(Request $request, Department $department)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:departments,name,'.$department->id]);
+        $oldName = $department->name;
+        $newName = trim($request->name);
+
+        $department->update(['name' => $newName]);
+        User::where('department', $oldName)->update(['department' => $newName]);
+
+        return back()->with('success', 'Department updated successfully.');
+    }
+
+    public function destroyDepartment(Department $department)
+    {
+        $department->delete();
+
+        return back()->with('success', 'Department deleted successfully.');
+    }
+
+    public function storeDesignation(Request $request)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:designations,name']);
+        Designation::create(['name' => trim($request->name)]);
+
+        return back()->with('success', 'Designation created successfully.');
+    }
+
+    public function updateDesignation(Request $request, Designation $designation)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:designations,name,'.$designation->id]);
+        $oldName = $designation->name;
+        $newName = trim($request->name);
+
+        $designation->update(['name' => $newName]);
+        User::where('job_title', $oldName)->update(['job_title' => $newName]);
+
+        return back()->with('success', 'Designation updated successfully.');
+    }
+
+    public function destroyDesignation(Designation $designation)
+    {
+        $designation->delete();
+
+        return back()->with('success', 'Designation deleted successfully.');
+    }
+
+    public function roster(): View
+    {
+        $shifts = Shift::withCount('assignments')->get();
+        $employees = User::where('role', '!=', 'admin')->where('status', 'Active')->orderBy('name')->get();
+        $assignments = ShiftAssignment::with(['user', 'shift'])->latest()->get();
+
+        return view('admin.roster', compact('shifts', 'employees', 'assignments'));
+    }
+
+    public function storeShift(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'grace_minutes' => 'nullable|integer|min:0',
+            'break_minutes' => 'nullable|integer|min:0',
+            'ot_starts_after' => 'nullable|integer|min:0',
+            'is_overnight' => 'nullable|boolean',
+        ]);
+
+        $data['grace_minutes'] = $data['grace_minutes'] ?? 0;
+        $data['break_minutes'] = $data['break_minutes'] ?? 0;
+        $data['ot_starts_after'] = $data['ot_starts_after'] ?? 0;
+        $data['is_overnight'] = $request->boolean('is_overnight');
+
+        Shift::create($data);
+
+        return back()->with('success', 'Shift created successfully.');
+    }
+
+    public function updateShift(Request $request, Shift $shift)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'grace_minutes' => 'nullable|integer|min:0',
+            'break_minutes' => 'nullable|integer|min:0',
+            'ot_starts_after' => 'nullable|integer|min:0',
+            'is_overnight' => 'nullable|boolean',
+        ]);
+
+        $data['grace_minutes'] = $data['grace_minutes'] ?? 0;
+        $data['break_minutes'] = $data['break_minutes'] ?? 0;
+        $data['ot_starts_after'] = $data['ot_starts_after'] ?? 0;
+        $data['is_overnight'] = $request->boolean('is_overnight');
+
+        $shift->update($data);
+
+        return back()->with('success', 'Shift updated successfully.');
+    }
+
+    public function destroyShift(Shift $shift)
+    {
+        $shift->delete();
+
+        return back()->with('success', 'Shift deleted successfully.');
+    }
+
+    public function storeShiftAssignment(Request $request)
+    {
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'shift_id' => 'required|exists:shifts,id',
+            'from_date' => 'required|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+        ]);
+
+        ShiftAssignment::create($data);
+
+        return back()->with('success', 'Shift assigned successfully.');
+    }
+
+    public function destroyShiftAssignment(ShiftAssignment $assignment)
+    {
+        $assignment->delete();
+
+        return back()->with('success', 'Shift assignment removed successfully.');
+    }
+
     public function storeEmployee(Request $request)
     {
+        $portalLogin = $request->boolean('portal_login');
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email',
@@ -327,26 +479,37 @@ class AdminController extends Controller
             'department' => 'nullable|string',
             'employee_code' => 'nullable|string|unique:users,employee_code',
             'job_title' => 'nullable|string',
-            'role' => 'required|in:employee,manager',
-            'salary' => 'required|numeric|min:0',
+            'role' => 'nullable|in:employee,manager',
+            'salary' => 'nullable|numeric|min:0',
             'join_date' => 'nullable|date',
             'status' => 'required|in:Active,Inactive',
             'address' => 'nullable|string|max:1000',
             'weekly_off' => 'nullable|array',
             'weekly_off.*' => 'string',
             'portal_login' => 'nullable|boolean',
+            'login_email' => 'nullable|email|unique:users,email',
+            'password' => $portalLogin ? 'nullable|string|min:6|confirmed' : 'nullable',
         ]);
 
         $next = User::whereNotNull('employee_code')->count() + 1;
-        $code = $data['employee_code'] ?? 'EMP'.str_pad((string) $next, 3, '0', STR_PAD_LEFT);
+        $code = !empty($data['employee_code']) ? $data['employee_code'] : 'EMP'.str_pad((string) $next, 3, '0', STR_PAD_LEFT);
+
+        $email = !empty($data['login_email']) ? $data['login_email'] : ($data['email'] ?? null);
 
         $data['employee_code'] = $code;
-        $data['portal_login'] = $request->boolean('portal_login');
+        $data['email'] = $email;
+        $data['role'] = $data['role'] ?? 'employee';
+        $data['salary'] = $data['salary'] ?? 0;
+        $data['portal_login'] = $portalLogin;
         $data['weekly_off'] = $request->input('weekly_off', []);
+
+        $passwordStr = !empty($request->input('password')) ? $request->input('password') : 'demo1234';
+
+        unset($data['login_email'], $data['password_confirmation']);
 
         User::create([
             ...$data,
-            'password' => Hash::make('demo1234'),
+            'password' => Hash::make($passwordStr),
         ]);
 
         AuditLog::create([
@@ -359,7 +522,7 @@ class AdminController extends Controller
             'logged_at' => now(),
         ]);
 
-        return back()->with('success', 'Employee created (password: demo1234).');
+        return redirect()->route('admin.employees')->with('success', 'Employee created successfully (password: '.$passwordStr.').');
     }
 
     public function updateEmployee(Request $request, User $employee)
