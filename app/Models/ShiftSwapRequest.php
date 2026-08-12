@@ -2,28 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class ShiftSwapRequest extends Model
+/**
+ * @deprecated Use \Modules\Attendance\Models\ShiftSwapRequest
+ */
+class ShiftSwapRequest extends \Modules\Attendance\Models\ShiftSwapRequest
 {
-    protected $fillable = [
-        'requester_id', 'target_user_id', 'date', 'requester_shift_id',
-        'target_shift_id', 'reason', 'status', 'reviewed_by',
-    ];
-
-    protected function casts(): array
-    {
-        return ['date' => 'date'];
-    }
-
-    public function requester(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'requester_id');
-    }
-
-    public function targetUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'target_user_id');
-    }
 }

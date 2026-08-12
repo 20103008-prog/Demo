@@ -6,7 +6,7 @@
             <i class="bi {{ $icon }}"></i>
         </div>
         <div>
-            <div class="text-muted small">{{ $title }}</div>
+            <div class="kpi-label">{{ $title }}</div>
             <div class="fs-5 fw-bold">{{ $value }}</div>
             @if($sub)<div class="text-muted" style="font-size:12px;">{{ $sub }}</div>@endif
         </div>

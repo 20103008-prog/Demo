@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class EmployeeDocument extends Model
+/**
+ * @deprecated Use \Modules\HR\Models\EmployeeDocument
+ */
+class EmployeeDocument extends \Modules\HR\Models\EmployeeDocument
 {
-    protected $fillable = [
-        'user_id', 'type', 'title', 'file_path', 'mime', 'size', 'uploaded_by',
-    ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 }

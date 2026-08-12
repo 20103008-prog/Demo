@@ -1,0 +1,1 @@
+{"name":"Payroll","alias":"payroll","providers":["Modules\\Payroll\\Providers\\PayrollServiceProvider"],"enabled":true}

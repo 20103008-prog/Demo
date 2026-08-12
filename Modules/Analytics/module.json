@@ -1,0 +1,1 @@
+{"name":"Analytics","alias":"analytics","providers":["Modules\\Analytics\\Providers\\AnalyticsServiceProvider"],"enabled":true}

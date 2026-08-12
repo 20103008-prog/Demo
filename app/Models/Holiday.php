@@ -2,22 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Holiday extends Model
+/**
+ * @deprecated Use \Modules\Leave\Models\Holiday
+ */
+class Holiday extends \Modules\Leave\Models\Holiday
 {
-    protected $fillable = ['date', 'name', 'is_active'];
-
-    protected function casts(): array
-    {
-        return [
-            'date' => 'date',
-            'is_active' => 'boolean',
-        ];
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
 }

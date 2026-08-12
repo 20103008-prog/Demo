@@ -1,0 +1,1 @@
+{"name":"HR","alias":"hr","providers":["Modules\\HR\\Providers\\HRServiceProvider"],"enabled":true}

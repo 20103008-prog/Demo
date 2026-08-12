@@ -2,24 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class AppNotification extends Model
+/**
+ * @deprecated Use \Modules\HR\Models\AppNotification
+ */
+class AppNotification extends \Modules\HR\Models\AppNotification
 {
-    protected $table = 'app_notifications';
-
-    protected $fillable = [
-        'user_id', 'type', 'title', 'body', 'is_read',
-    ];
-
-    protected function casts(): array
-    {
-        return ['is_read' => 'boolean'];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 }

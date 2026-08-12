@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class LeaveBalance extends Model
+/**
+ * @deprecated Use \Modules\Leave\Models\LeaveBalance
+ */
+class LeaveBalance extends \Modules\Leave\Models\LeaveBalance
 {
-    protected $fillable = [
-        'user_id', 'year', 'casual', 'sick', 'earned',
-    ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 }

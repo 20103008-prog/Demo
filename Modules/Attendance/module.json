@@ -1,0 +1,1 @@
+{"name":"Attendance","alias":"attendance","providers":["Modules\\Attendance\\Providers\\AttendanceServiceProvider"],"enabled":true}

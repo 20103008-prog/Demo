@@ -11,59 +11,77 @@
 <body data-auth="{{ auth()->check() ? '1' : '0' }}" data-logout-url="{{ route('logout') }}">
 @php
     $role = auth()->user()->role;
-    $nav = match($role) {
+    $navGroups = match($role) {
         'admin' => [
-            ['Dashboard', 'admin.dashboard', 'bi-speedometer2'],
-            ['Analytics', 'admin.analytics', 'bi-graph-up-arrow'],
-            ['Companies', 'admin.companies', 'bi-buildings'],
-            ['Employees', 'admin.employees', 'bi-people'],
-            ['Roster / Duty', 'admin.roster', 'bi-calendar-range'],
-            ['Shift Swaps', 'admin.swaps', 'bi-arrow-left-right'],
-            ['Payroll', 'admin.payroll', 'bi-cash-stack'],
-            ['Payroll Approvals', 'admin.payroll.approvals', 'bi-shield-check'],
-            ['Bank Advice', 'admin.bank.advice', 'bi-bank2'],
-            ['Tax & PF (NBR)', 'admin.taxpf', 'bi-percent'],
-            ['Investments', 'admin.investments', 'bi-piggy-bank'],
-            ['Loans', 'admin.loans', 'bi-credit-card'],
-            ['Bonus & Increment', 'admin.bonus', 'bi-award'],
-            ['Appraisals', 'admin.appraisals', 'bi-clipboard-data'],
-            ['Leave Policies', 'admin.leave.policies', 'bi-journal-text'],
-            ['Documents', 'admin.documents', 'bi-folder'],
-            ['Biometrics', 'admin.biometrics', 'bi-fingerprint'],
-            ['Settlement', 'admin.settlement', 'bi-bank'],
-            ['AI Queries', 'admin.queries', 'bi-robot'],
-            ['Products', 'admin.products', 'bi-box-seam'],
-            ['Inquiries', 'admin.inquiries', 'bi-envelope'],
-            ['Reports', 'admin.reports', 'bi-file-earmark-bar-graph'],
-            ['Audit Logs', 'admin.audit', 'bi-shield-lock'],
+            'Overview' => [
+                ['Dashboard', 'admin.dashboard', 'bi-speedometer2'],
+                ['Analytics', 'admin.analytics', 'bi-graph-up-arrow'],
+            ],
+            'People' => [
+                ['Companies', 'admin.companies', 'bi-buildings'],
+                ['Employees', 'admin.employees', 'bi-people'],
+                ['Roster / Duty', 'admin.roster', 'bi-calendar-range'],
+                ['Shift Swaps', 'admin.swaps', 'bi-arrow-left-right'],
+                ['Biometrics', 'admin.biometrics', 'bi-fingerprint'],
+            ],
+            'Payroll' => [
+                ['Payroll', 'admin.payroll', 'bi-cash-stack'],
+                ['Payroll Approvals', 'admin.payroll.approvals', 'bi-shield-check'],
+                ['Bank Advice', 'admin.bank.advice', 'bi-bank2'],
+                ['Tax & PF (NBR)', 'admin.taxpf', 'bi-percent'],
+                ['Loans', 'admin.loans', 'bi-credit-card'],
+                ['Bonus & Increment', 'admin.bonus', 'bi-award'],
+                ['Settlement', 'admin.settlement', 'bi-bank'],
+            ],
+            'Compliance' => [
+                ['Investments', 'admin.investments', 'bi-piggy-bank'],
+                ['Appraisals', 'admin.appraisals', 'bi-clipboard-data'],
+                ['Leave Policies', 'admin.leave.policies', 'bi-journal-text'],
+                ['Documents', 'admin.documents', 'bi-folder'],
+                ['AI Queries', 'admin.queries', 'bi-robot'],
+            ],
+            'System' => [
+                ['Products', 'admin.products', 'bi-box-seam'],
+                ['Inquiries', 'admin.inquiries', 'bi-envelope'],
+                ['Reports', 'admin.reports', 'bi-file-earmark-bar-graph'],
+                ['Audit Logs', 'admin.audit', 'bi-shield-lock'],
+            ],
         ],
         'manager' => [
-            ['Dashboard', 'manager.dashboard', 'bi-speedometer2'],
-            ['My Team', 'manager.team', 'bi-people'],
-            ['Team Attendance', 'manager.attendance', 'bi-people-fill'],
-            ['My Attendance', 'employee.attendance', 'bi-clock'],
-            ['Leave', 'employee.leave', 'bi-calendar3'],
-            ['Overtime Request', 'employee.overtime', 'bi-hourglass'],
-            ['Documents', 'employee.documents', 'bi-folder'],
-            ['Investments', 'employee.investments', 'bi-piggy-bank'],
-            ['Payroll', 'employee.payroll', 'bi-cash'],
-            ['Queries', 'employee.queries', 'bi-chat-dots'],
-            ['Leave Approvals', 'manager.leaves', 'bi-check2-square'],
-            ['OT Approvals', 'manager.overtime', 'bi-stopwatch'],
-            ['Reports', 'manager.reports', 'bi-bar-chart'],
+            'Team' => [
+                ['Dashboard', 'manager.dashboard', 'bi-speedometer2'],
+                ['My Team', 'manager.team', 'bi-people'],
+                ['Team Attendance', 'manager.attendance', 'bi-people-fill'],
+                ['Leave Approvals', 'manager.leaves', 'bi-check2-square'],
+                ['OT Approvals', 'manager.overtime', 'bi-stopwatch'],
+                ['Reports', 'manager.reports', 'bi-bar-chart'],
+            ],
+            'My self-service' => [
+                ['My Attendance', 'employee.attendance', 'bi-clock'],
+                ['Leave', 'employee.leave', 'bi-calendar3'],
+                ['Overtime Request', 'employee.overtime', 'bi-hourglass'],
+                ['Documents', 'employee.documents', 'bi-folder'],
+                ['Investments', 'employee.investments', 'bi-piggy-bank'],
+                ['Payroll', 'employee.payroll', 'bi-cash'],
+                ['Queries', 'employee.queries', 'bi-chat-dots'],
+            ],
         ],
         default => [
-            ['Dashboard', 'employee.dashboard', 'bi-speedometer2'],
-            ['Attendance', 'employee.attendance', 'bi-clock'],
-            ['Leave', 'employee.leave', 'bi-calendar3'],
-            ['Overtime', 'employee.overtime', 'bi-hourglass'],
-            ['Shift Swap', 'employee.swaps', 'bi-arrow-left-right'],
-            ['Documents', 'employee.documents', 'bi-folder'],
-            ['Investments', 'employee.investments', 'bi-piggy-bank'],
-            ['Appraisals', 'employee.appraisals', 'bi-clipboard-data'],
-            ['Payroll', 'employee.payroll', 'bi-cash'],
-            ['Queries', 'employee.queries', 'bi-chat-dots'],
-            ['2FA Security', 'employee.twofactor', 'bi-shield-lock'],
+            'Daily' => [
+                ['Dashboard', 'employee.dashboard', 'bi-speedometer2'],
+                ['Attendance', 'employee.attendance', 'bi-clock'],
+                ['Leave', 'employee.leave', 'bi-calendar3'],
+                ['Overtime', 'employee.overtime', 'bi-hourglass'],
+                ['Shift Swap', 'employee.swaps', 'bi-arrow-left-right'],
+            ],
+            'Account' => [
+                ['Documents', 'employee.documents', 'bi-folder'],
+                ['Investments', 'employee.investments', 'bi-piggy-bank'],
+                ['Appraisals', 'employee.appraisals', 'bi-clipboard-data'],
+                ['Payroll', 'employee.payroll', 'bi-cash'],
+                ['Queries', 'employee.queries', 'bi-chat-dots'],
+                ['2FA Security', 'employee.twofactor', 'bi-shield-lock'],
+            ],
         ],
     };
     $roleLabel = match($role) {
@@ -88,11 +106,15 @@
                 </div>
             </div>
         </div>
-        <nav class="sidebar-nav nav flex-column">
-            @foreach($nav as [$label, $route, $icon])
-                <a href="{{ route($route) }}" class="nav-link {{ request()->routeIs($route) || request()->routeIs(str_replace('.dashboard','.*', $route) === $route ? $route : $route) ? '' : '' }} {{ request()->routeIs($route) ? 'active' : '' }}">
-                    <i class="bi {{ $icon }}"></i> {{ $label }}
-                </a>
+        <nav class="sidebar-nav">
+            @foreach($navGroups as $group => $items)
+                <div class="sidebar-section-label">{{ $group }}</div>
+                @foreach($items as [$label, $route, $icon])
+                    <a href="{{ route($route) }}" class="nav-link {{ request()->routeIs($route) ? 'active' : '' }}">
+                        <i class="bi {{ $icon }}"></i>
+                        <span>{{ $label }}</span>
+                    </a>
+                @endforeach
             @endforeach
         </nav>
         <div class="sidebar-user">
@@ -127,6 +149,7 @@
                 </select>
             </form>
 
+            @if($role === 'admin')
             <div class="dropdown me-2">
                 <button class="btn btn-sm btn-light d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-people me-1"></i>
@@ -135,39 +158,26 @@
                 <ul class="dropdown-menu shadow" style="min-width:220px;">
                     <li class="dropdown-header text-muted small">WORKFORCE</li>
                     <li>
-                        <a class="dropdown-item d-flex align-items-center" href="{{ Route::has('admin.employees') ? route('admin.employees') : '#' }}">
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.employees') }}">
                             <i class="bi bi-people me-2"></i>
                             Employees
                         </a>
                     </li>
                     <li>
-                        @if(Route::has('admin.departments'))
-                            <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.departments') }}">
-                                <i class="bi bi-diagram-2 me-2"></i>
-                                Departments
-                            </a>
-                        @else
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <i class="bi bi-diagram-2 me-2"></i>
-                                Departments
-                            </a>
-                        @endif
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.departments') }}">
+                            <i class="bi bi-diagram-2 me-2"></i>
+                            Departments
+                        </a>
                     </li>
                     <li>
-                        @if(Route::has('admin.roster') || Route::has('admin.duty'))
-                            <a class="dropdown-item d-flex align-items-center" href="{{ Route::has('admin.roster') ? route('admin.roster') : (Route::has('admin.duty') ? route('admin.duty') : '#') }}">
-                                <i class="bi bi-calendar-check me-2"></i>
-                                Roster / Duty
-                            </a>
-                        @else
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <i class="bi bi-calendar-check me-2"></i>
-                                Roster / Duty
-                            </a>
-                        @endif
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.roster') }}">
+                            <i class="bi bi-calendar-check me-2"></i>
+                            Roster / Duty
+                        </a>
                     </li>
                 </ul>
             </div>
+            @endif
 
             <div class="dropdown">
                 <button class="btn btn-sm btn-light position-relative" data-bs-toggle="dropdown">

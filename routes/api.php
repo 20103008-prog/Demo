@@ -1,7 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\DeviceApiController;
-use Illuminate\Support\Facades\Route;
+/*
+| API routes are registered by Modules (e.g. Attendance/Routes/api.php).
+*/
 
-Route::post('/biometric/punches', [DeviceApiController::class, 'syncPunches']);
-Route::get('/biometric/employees', [DeviceApiController::class, 'employees']);

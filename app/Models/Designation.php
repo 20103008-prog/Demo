@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Designation extends Model
+/**
+ * @deprecated Use \Modules\Organization\Models\Designation
+ */
+class Designation extends \Modules\Organization\Models\Designation
 {
-    use HasFactory;
-
-    protected $fillable = ['name'];
-
-    public function getStaffCountAttribute(): int
-    {
-        return User::where('job_title', $this->name)->count();
-    }
 }

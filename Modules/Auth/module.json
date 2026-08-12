@@ -1,0 +1,1 @@
+{"name":"Auth","alias":"auth","providers":["Modules\\Auth\\Providers\\AuthServiceProvider"],"enabled":true}

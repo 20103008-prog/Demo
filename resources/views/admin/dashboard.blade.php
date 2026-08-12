@@ -5,12 +5,14 @@
     <h2 class="h5 mb-0 fw-semibold">Dashboard Overview</h2>
     <p class="small text-muted mb-0">{{ now()->format('D, M j') }}</p>
 </div>
-<div class="row g-3 mb-4"> 
-     <div class="col-md-4 col-xl">
+
+{{-- Primary attendance KPIs --}}
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-4 col-xl">
         <div class="card kpi-card h-100">
             <div class="card-body d-flex align-items-start justify-content-between gap-3">
                 <div>
-                    <div class="text-muted small">Active Employees</div>
+                    <div class="kpi-label">Active Employees</div>
                     <div class="fs-5 fw-bold">{{ $stats['employees'] }}</div>
                 </div>
                 <a href="{{ route('admin.employees') }}" class="btn btn-outline-primary btn-sm" aria-label="Manage employees">
@@ -18,15 +20,15 @@
                 </a>
             </div>
         </div>
-    </div>      
-   
-    
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'Present Today','value'=>$stats['presentToday'],'icon'=>'bi-check2-circle','color'=>'success'])</div>
-    <div class="col-md-4 col-xl">
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        @include('components.kpi', ['title'=>'Present Today','value'=>$stats['presentToday'],'icon'=>'bi-check2-circle','color'=>'success'])
+    </div>
+    <div class="col-6 col-md-4 col-xl">
         <div class="card kpi-card h-100">
             <div class="card-body d-flex align-items-start justify-content-between gap-3">
                 <div>
-                    <div class="text-muted small">Late Today</div>
+                    <div class="kpi-label">Late Today</div>
                     <div class="fs-5 fw-bold">{{ $stats['lateToday'] }}</div>
                 </div>
                 <a href="{{ route('admin.late.today') }}" class="btn btn-outline-danger btn-sm" aria-label="View who is late today">
@@ -35,37 +37,14 @@
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'On Leave Today','value'=>$stats['onLeaveToday'],'icon'=>'bi-calendar-minus','color'=>'warning'])</div>
-    <div class="col-md-4 col-xl">
-        <div class="card kpi-card h-100">
-            <div class="card-body d-flex align-items-start justify-content-between gap-3">
-                <div>
-                    <div class="text-muted small">Still Not Punched</div>
-                    <div class="fs-5 fw-bold">{{ $stats['notPunchedToday'] }}</div>
-                </div>
-                <a href="{{ route('admin.today.summary') }}" class="btn btn-outline-primary btn-sm">Today</a>
-            </div>
-            <div class="list-group list-group-flush">
-                @forelse($notPunchedEmployees->take(5) as $employee)
-                    <a href="{{ route('admin.employees.history', $employee) }}" class="list-group-item list-group-item-action py-2">
-                        <div class="fw-semibold">{{ $employee->name }}</div>
-                        <div class="text-muted small">{{ $employee->department }}</div>
-                    </a>
-                @empty
-                    <div class="p-3 text-muted small">All active employees have punched today.</div>
-                @endforelse
-                @if($notPunchedEmployees->count() > 5)
-                    <div class="text-center py-2"><a href="{{ route('admin.today.not.punched') }}" class="small">View all</a></div>
-                @endif
-            </div>
-        </div>
+    <div class="col-6 col-md-4 col-xl">
+        @include('components.kpi', ['title'=>'On Leave Today','value'=>$stats['onLeaveToday'],'icon'=>'bi-calendar-minus','color'=>'warning'])
     </div>
-    <div class="col-md-4 col-xl">
+    <div class="col-6 col-md-4 col-xl">
         <div class="card kpi-card h-100">
             <div class="card-body d-flex align-items-start justify-content-between gap-3">
                 <div>
-                    <div class="text-muted small">Punches Today</div>
+                    <div class="kpi-label">Punches Today</div>
                     <div class="fs-5 fw-bold">{{ $stats['punchesToday'] }}</div>
                 </div>
                 <a href="{{ route('admin.today.punches') }}" class="btn btn-outline-primary btn-sm" aria-label="View today's punches">
@@ -74,11 +53,46 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'Pending Leaves','value'=>$stats['pendingLeaves'],'icon'=>'bi-calendar','color'=>'warning'])</div>
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'Open Queries','value'=>$stats['openQueries'],'icon'=>'bi-chat','color'=>'info'])</div>
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'Jul Payroll','value'=>inr($stats['payroll']),'icon'=>'bi-cash','color'=>'success'])</div>
-    <div class="col-md-4 col-xl">@include('components.kpi', ['title'=>'Active Loans','value'=>$stats['activeLoans'],'icon'=>'bi-credit-card','color'=>'danger'])</div>
 </div>
+
+{{-- Secondary metrics + not-punched list --}}
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">@include('components.kpi', ['title'=>'Pending Leaves','value'=>$stats['pendingLeaves'],'icon'=>'bi-calendar','color'=>'warning'])</div>
+            <div class="col-6 col-md-3">@include('components.kpi', ['title'=>'Open Queries','value'=>$stats['openQueries'],'icon'=>'bi-chat','color'=>'info'])</div>
+            <div class="col-6 col-md-3">@include('components.kpi', ['title'=>now()->format('M').' Payroll','value'=>inr($stats['payroll']),'icon'=>'bi-cash','color'=>'success'])</div>
+            <div class="col-6 col-md-3">@include('components.kpi', ['title'=>'Active Loans','value'=>$stats['activeLoans'],'icon'=>'bi-credit-card','color'=>'danger'])</div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card kpi-card h-100">
+            <div class="card-body d-flex align-items-start justify-content-between gap-3 pb-2">
+                <div>
+                    <div class="kpi-label">Still Not Punched</div>
+                    <div class="fs-5 fw-bold">{{ $stats['notPunchedToday'] }}</div>
+                </div>
+                <a href="{{ route('admin.today.summary') }}" class="btn btn-outline-primary btn-sm">Today</a>
+            </div>
+            <div class="list-group list-group-flush border-top">
+                @forelse($notPunchedEmployees->take(5) as $employee)
+                    <a href="{{ route('admin.employees.history', $employee) }}" class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="fw-semibold">{{ $employee->name }}</div>
+                        <div class="text-muted small">{{ $employee->department }}</div>
+                    </a>
+                @empty
+                    <div class="px-3 py-3 text-muted small">All active employees have punched today.</div>
+                @endforelse
+            </div>
+            @if($notPunchedEmployees->count() > 5)
+                <a href="{{ route('admin.today.not.punched') }}" class="list-group-item list-group-item-action text-center small fw-semibold py-2 border-top">
+                    View all {{ $notPunchedEmployees->count() }}
+                </a>
+            @endif
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-8">
         <div class="card card-panel">
@@ -104,9 +118,10 @@
         </div>
     </div>
 </div>
-<div class="row g-3 mt-3">
-    <div class="col-12">
-        <div class="card card-panel">
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-7">
+        <div class="card card-panel h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
@@ -133,7 +148,7 @@
                                     $timestamp = $punchTime ? \Carbon\Carbon::parse($record->date->format('Y-m-d').' '.$punchTime) : null;
                                 @endphp
                                 <tr>
-                                    <td>{{ $record->user->name }}</td>
+                                    <td class="fw-semibold">{{ $record->user->name }}</td>
                                     <td>{{ $record->date->format('d M') }}</td>
                                     <td>
                                         {{ $punchTime ?: '—' }}
@@ -156,13 +171,11 @@
             </div>
         </div>
     </div>
-</div>
-<div class="row g-3 mt-3">
-    <div class="col-12">
-        <div class="card card-panel">
+    <div class="col-lg-5">
+        <div class="card card-panel h-100">
             <div class="card-body">
                 <h2 class="h6 fw-semibold mb-3">Punch volume · last 7 days</h2>
-                <div class="chart-box">
+                <div class="chart-box chart-box-sm">
                     <canvas id="punchVolumeChartCanvas"></canvas>
                 </div>
             </div>

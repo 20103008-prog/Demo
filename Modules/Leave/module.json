@@ -1,0 +1,1 @@
+{"name":"Leave","alias":"leave","providers":["Modules\\Leave\\Providers\\LeaveServiceProvider"],"enabled":true}
