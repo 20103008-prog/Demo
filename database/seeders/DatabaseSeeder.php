@@ -444,5 +444,8 @@ class DatabaseSeeder extends Seeder
         foreach ($products as $p) {
             Product::updateOrCreate(['slug' => $p['slug']], $p + ['is_published' => true, 'currency' => 'BDT']);
         }
+
+        $this->call(PayrollRulesSeeder::class);
+        $this->call(IndustrialFeaturesSeeder::class);
     }
 }

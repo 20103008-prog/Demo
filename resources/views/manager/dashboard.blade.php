@@ -4,6 +4,8 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3">@include('components.kpi', ['title'=>'Team Size','value'=>$team->count(),'icon'=>'bi-people','color'=>'primary'])</div>
     <div class="col-md-3">@include('components.kpi', ['title'=>'Present Today','value'=>$presentToday,'sub'=>$presentPct.'%','icon'=>'bi-person-check','color'=>'success'])</div>
+    <div class="col-md-3">@include('components.kpi', ['title'=>'Late Today','value'=>$lateToday,'icon'=>'bi-alarm','color'=>'warning'])</div>
+    <div class="col-md-3">@include('components.kpi', ['title'=>'Absent Today','value'=>$absentToday,'icon'=>'bi-x-circle','color'=>'danger'])</div>
     <div class="col-md-3">@include('components.kpi', ['title'=>'Pending Leaves','value'=>$pendingLeaves,'icon'=>'bi-calendar-check','color'=>'warning'])</div>
     <div class="col-md-3">@include('components.kpi', ['title'=>'Pending OT','value'=>$pendingOt,'icon'=>'bi-stopwatch','color'=>'info'])</div>
 </div>

@@ -4,16 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\AttendanceRecord;
 use App\Models\AuditLog;
+use App\Models\Bonus;
 use App\Models\LeaveRequest;
+use App\Models\Loan;
 use App\Models\OvertimeRequest;
 use App\Models\Payslip;
+use App\Models\Settlement;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ManagerController extends Controller
 {
+    protected function teamIds(): array
+    {
+        $dept = Auth::user()->department;
+
+        return User::where('department', $dept)
+            ->whereIn('role', ['employee', 'manager'])
+            ->pluck('id')
+            ->all();
+    }
+
     public function dashboard(): View
     {
         $dept = Auth::user()->department;
@@ -24,11 +38,21 @@ class ManagerController extends Controller
             ->where('status', 'Pending')->count();
         $presentToday = AttendanceRecord::whereDate('date', today())
             ->whereIn('user_id', $team->pluck('id'))
-            ->whereIn('status', ['Present', 'Late', 'Half-day'])
+            ->whereIn('status', ['Present', 'Late', 'Half-day', 'Early Departure'])
             ->count();
         $presentPct = $team->count() ? round(($presentToday / $team->count()) * 100) : 0;
+        $lateToday = AttendanceRecord::whereDate('date', today())
+            ->whereIn('user_id', $team->pluck('id'))
+            ->whereIn('status', ['Late', 'Late (Absence Rule)'])
+            ->count();
+        $absentToday = AttendanceRecord::whereDate('date', today())
+            ->whereIn('user_id', $team->pluck('id'))
+            ->where('status', 'Absent')
+            ->count();
 
-        return view('manager.dashboard', compact('team', 'pendingLeaves', 'pendingOt', 'presentToday', 'presentPct'));
+        return view('manager.dashboard', compact(
+            'team', 'pendingLeaves', 'pendingOt', 'presentToday', 'presentPct', 'lateToday', 'absentToday'
+        ));
     }
 
     public function team(): View
@@ -37,6 +61,26 @@ class ManagerController extends Controller
         $team = User::where('department', $dept)->whereIn('role', ['employee', 'manager'])->orderBy('name')->get();
 
         return view('manager.team', compact('team', 'dept'));
+    }
+
+    public function attendance(Request $request): View
+    {
+        $dept = Auth::user()->department;
+        $date = $request->input('date', today()->toDateString());
+        $team = User::where('department', $dept)->where('role', 'employee')->where('status', 'Active')->orderBy('name')->get();
+        $records = AttendanceRecord::with('user')
+            ->whereIn('user_id', $team->pluck('id'))
+            ->whereDate('date', $date)
+            ->get()
+            ->keyBy('user_id');
+
+        $lateCount = $records->filter(fn ($r) => str_starts_with($r->status, 'Late'))->count();
+        $absentCount = $records->where('status', 'Absent')->count();
+        $presentCount = $records->filter(fn ($r) => in_array($r->status, ['Present', 'Late', 'Half-day', 'Early Departure', 'Late (Absence Rule)'], true))->count();
+
+        return view('manager.attendance', compact(
+            'dept', 'date', 'team', 'records', 'lateCount', 'absentCount', 'presentCount'
+        ));
     }
 
     public function leaves(): View
@@ -107,17 +151,37 @@ class ManagerController extends Controller
         return back()->with('success', 'Overtime '.$data['status'].'.');
     }
 
-    public function reports(): View
+    public function reports(Request $request): View
     {
         $dept = Auth::user()->department;
-        $teamIds = User::where('department', $dept)->pluck('id');
-        $payroll = Payslip::whereIn('user_id', $teamIds)->where('month_num', 7)->where('year', 2025)->sum('net');
+        $teamIds = $this->teamIds();
+        $year = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', now()->month);
 
+        $payroll = Payslip::whereIn('user_id', $teamIds)->where('month_num', $month)->where('year', $year)->sum('net');
+        $tdsTotal = Payslip::whereIn('user_id', $teamIds)->where('month_num', $month)->where('year', $year)->sum('tds');
+        $pfTotal = Payslip::whereIn('user_id', $teamIds)->where('month_num', $month)->where('year', $year)->sum('pf_employee');
+        $loanDeducted = Payslip::whereIn('user_id', $teamIds)->where('month_num', $month)->where('year', $year)->sum('loan_deduction');
+        $loanOutstanding = Loan::whereIn('user_id', $teamIds)->where('status', 'Active')->sum('outstanding');
+        $bonusTotal = Bonus::whereIn('user_id', $teamIds)->sum('festival_bonus');
+        $settlementTotal = Settlement::whereIn('user_id', $teamIds)->sum('net_settlement');
+
+        $start = Carbon::create($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
         $presentDays = AttendanceRecord::whereIn('user_id', $teamIds)
-            ->whereIn('status', ['Present', 'Late', 'Half-day'])
+            ->whereBetween('date', [$start, $end])
+            ->whereIn('status', ['Present', 'Late', 'Half-day', 'Early Departure', 'Late (Absence Rule)'])
             ->count();
-        $totalDays = max(1, AttendanceRecord::whereIn('user_id', $teamIds)->count());
+        $totalDays = max(1, AttendanceRecord::whereIn('user_id', $teamIds)->whereBetween('date', [$start, $end])->count());
         $attendancePct = round(($presentDays / $totalDays) * 100);
+        $lateCount = AttendanceRecord::whereIn('user_id', $teamIds)
+            ->whereBetween('date', [$start, $end])
+            ->whereIn('status', ['Late', 'Late (Absence Rule)'])
+            ->count();
+        $absentCount = AttendanceRecord::whereIn('user_id', $teamIds)
+            ->whereBetween('date', [$start, $end])
+            ->where('status', 'Absent')
+            ->count();
 
         $otTrend = OvertimeRequest::whereIn('user_id', $teamIds)
             ->selectRaw("DATE_FORMAT(date, '%b') as label, MONTH(date) as m, SUM(hours) as hours")
@@ -149,6 +213,12 @@ class ManagerController extends Controller
             ];
         }
 
-        return view('manager.reports', compact('dept', 'payroll', 'attendancePct', 'otChart'));
+        $periodLabel = Carbon::create($year, $month, 1)->format('M Y');
+
+        return view('manager.reports', compact(
+            'dept', 'payroll', 'attendancePct', 'otChart', 'year', 'month', 'periodLabel',
+            'tdsTotal', 'pfTotal', 'loanDeducted', 'loanOutstanding', 'bonusTotal',
+            'settlementTotal', 'lateCount', 'absentCount'
+        ));
     }
 }

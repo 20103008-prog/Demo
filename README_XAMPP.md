@@ -38,4 +38,36 @@ Troubleshooting
 - Ensure PHP version in XAMPP meets the project's requirement (see `composer.json`, needs PHP ^8.2).
 - If migrations fail, verify MySQL is running and `.env` DB credentials are correct.
 
-If you want, I can add an Apache virtual host sample config and a PowerShell script to start the server automatically.
+## Database (MySQL)
+
+1. Create / import schema:
+   - Prefer: `php artisan migrate:fresh --seed` (full demo data + dynamic rules + industrial features)
+   - Or import `database/hrpayroll.sql` in phpMyAdmin / MySQL CLI for schema + payroll settings / tax slabs / holidays / FAQs
+
+2. After migrate:
+```powershell
+& 'C:\xampp\php\php.exe' artisan storage:link
+```
+
+3. Default login after seeding:
+   - Admin: `admin@corp.com` / `admin1234`
+   - Employees: `*@corp.com` / `demo1234`
+
+### Industrial modules included
+- Multi-company / branch
+- Document vault, NBR investment proofs
+- Leave policies (half-day, sandwich, carry-forward)
+- Performance appraisal → increment
+- Maker-checker payroll approvals
+- Payslip PDF + email, BEFTN bank advice CSV
+- Biometric device API (`POST /api/biometric/punches`)
+- Offline punch queue (ESS)
+- Shift swap, night differential
+- Analytics / attrition risk
+- Email OTP 2FA, EN/BN locale switch
+
+Dynamic payroll rules live in:
+- `payroll_settings` — PF%, tax deduction, OT multiplier, loan protection, leave quotas, gratuity, AI thresholds
+- `tax_slabs` — NBR TDS slabs
+- `holidays` — non-working days
+- `payroll_faqs` — AI cosine-similarity knowledge base

@@ -12,6 +12,8 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
+        'company_id',
+        'branch_id',
         'employee_code',
         'name',
         'email',
@@ -23,13 +25,23 @@ class User extends Authenticatable
         'salary',
         'status',
         'join_date',
+        'tax_category',
+        'tin',
+        'bank_name',
+        'bank_account',
+        'bank_routing',
         'weekly_off',
         'portal_login',
+        'two_factor_enabled',
+        'two_factor_code',
+        'two_factor_expires_at',
+        'locale',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_code',
     ];
 
     protected function casts(): array
@@ -41,6 +53,8 @@ class User extends Authenticatable
             'salary' => 'decimal:2',
             'weekly_off' => 'array',
             'portal_login' => 'boolean',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_expires_at' => 'datetime',
         ];
     }
 
@@ -87,6 +101,36 @@ class User extends Authenticatable
     public function payslips(): HasMany
     {
         return $this->hasMany(Payslip::class);
+    }
+
+    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class);
+    }
+
+    public function investmentProofs(): HasMany
+    {
+        return $this->hasMany(InvestmentProof::class);
+    }
+
+    public function performanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class);
+    }
+
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(LeaveBalance::class);
     }
 
     public function appNotifications(): HasMany

@@ -1,9 +1,25 @@
 <?php
 
+if (! function_exists('money')) {
+    function money($amount): string
+    {
+        // U+09F3 BENGALI RUPEE SIGN (৳)
+        return "\u{09F3}".number_format((float) $amount, 0, '.', ',');
+    }
+}
+
+if (! function_exists('bdt')) {
+    function bdt($amount): string
+    {
+        return money($amount);
+    }
+}
+
+/** @deprecated Use money()/bdt() — kept for Blade compatibility */
 if (! function_exists('inr')) {
     function inr($amount): string
     {
-        return '₹'.number_format((float) $amount, 0, '.', ',');
+        return money($amount);
     }
 }
 
@@ -21,15 +37,23 @@ if (! function_exists('status_badge')) {
             'Present' => 'success',
             'Absent' => 'danger',
             'Late' => 'warning',
+            'Late (Absence Rule)' => 'danger',
+            'Early Departure' => 'warning',
+            'Not Punched' => 'secondary',
             'Half-day' => 'info',
+            'Pending Approval' => 'warning',
+            'Approved' => 'success',
+            'High' => 'danger',
+            'Medium' => 'warning',
+            'Low' => 'success',
+            'Submitted' => 'info',
+            'Queued' => 'secondary',
             'Paid' => 'primary',
             'Draft' => 'secondary',
             'Applied' => 'success',
             'Initiated' => 'info',
             'Generated' => 'primary',
-            'High' => 'danger',
-            'Medium' => 'warning',
-            'Low' => 'secondary',
+            'High Priority' => 'danger',
             'info' => 'info',
             'warning' => 'warning',
             'critical' => 'danger',
@@ -37,6 +61,9 @@ if (! function_exists('status_badge')) {
             'Contacted' => 'info',
             'Closed' => 'secondary',
         ];
+
+        // keep original High/Medium/Low priority keys too
+        $map['High'] = $map['High'] ?? 'danger';
 
         $color = $map[$status] ?? 'secondary';
 

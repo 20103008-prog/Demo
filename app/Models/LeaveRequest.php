@@ -9,6 +9,7 @@ class LeaveRequest extends Model
 {
     protected $fillable = [
         'code', 'user_id', 'type', 'from_date', 'to_date', 'days',
+        'is_half_day', 'half_day_session',
         'reason', 'status', 'applied_on', 'reviewed_by', 'review_comment',
     ];
 
@@ -18,6 +19,8 @@ class LeaveRequest extends Model
             'from_date' => 'date',
             'to_date' => 'date',
             'applied_on' => 'date',
+            'is_half_day' => 'boolean',
+            'days' => 'decimal:1',
         ];
     }
 

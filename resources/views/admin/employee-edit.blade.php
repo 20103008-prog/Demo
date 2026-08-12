@@ -33,6 +33,18 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label small">NBR Tax Category</label>
+                        <select name="tax_category" class="form-select" required>
+                            @foreach(\App\Services\TaxService::categoryOptions() as $value => $label)
+                                <option value="{{ $value }}" @selected(old('tax_category', $employee->tax_category ?? 'general') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">TIN / eTIN</label>
+                        <input name="tin" class="form-control" value="{{ old('tin', $employee->tin) }}" placeholder="Optional">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label small">Status</label>
                         <select name="status" class="form-select">
                             <option value="Active" @selected(old('status', $employee->status) === 'Active')>Active</option>

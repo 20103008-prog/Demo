@@ -114,6 +114,22 @@
                 </div>
             </div>
 
+            <!-- NBR Tax -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-dark small mb-1">NBR Tax Category</label>
+                    <select name="tax_category" class="form-select bg-light">
+                        @foreach(\App\Services\TaxService::categoryOptions() as $value => $label)
+                            <option value="{{ $value }}" @selected(old('tax_category', 'general') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-dark small mb-1">TIN / eTIN <span class="text-muted fw-normal">(optional)</span></label>
+                    <input type="text" name="tin" class="form-control bg-light" placeholder="e.g. 123456789012" value="{{ old('tin') }}">
+                </div>
+            </div>
+
             <!-- Row 4: Weekly off (weekend) -->
             <div class="mb-4">
                 <label class="form-label fw-semibold text-dark small mb-1">Weekly off <span class="text-muted fw-normal">(weekend)</span></label>

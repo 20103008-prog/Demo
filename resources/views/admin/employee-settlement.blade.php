@@ -13,6 +13,7 @@
             <li class="list-group-item d-flex justify-content-between"><span>PF (Employee)</span><strong>{{ inr($pfEmployee) }}</strong></li>
             <li class="list-group-item d-flex justify-content-between"><span>TDS</span><strong>{{ inr($tds) }}</strong></li>
             <li class="list-group-item d-flex justify-content-between"><span>Leave encashment</span><strong>{{ inr($leaveEncashment) }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between"><span>Gratuity</span><strong>{{ inr($gratuity ?? 0) }}</strong></li>
             <li class="list-group-item d-flex justify-content-between"><span>Outstanding loan</span><strong>{{ inr($outstandingLoan) }}</strong></li>
             <li class="list-group-item d-flex justify-content-between"><span class="fw-semibold">Net settlement</span><strong>{{ inr($netSettlement) }}</strong></li>
         </ul>

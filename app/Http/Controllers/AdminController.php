@@ -18,6 +18,10 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\SiteInquiry;
 use App\Models\User;
+use App\Services\PayrollService;
+use App\Services\PfService;
+use App\Services\SettlementService;
+use App\Services\TaxService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -482,6 +486,8 @@ class AdminController extends Controller
             'role' => 'nullable|in:employee,manager',
             'salary' => 'nullable|numeric|min:0',
             'join_date' => 'nullable|date',
+            'tax_category' => 'nullable|in:general,woman,senior,disabled,freedom_fighter',
+            'tin' => 'nullable|string|max:20',
             'status' => 'required|in:Active,Inactive',
             'address' => 'nullable|string|max:1000',
             'weekly_off' => 'nullable|array',
@@ -500,6 +506,7 @@ class AdminController extends Controller
         $data['email'] = $email;
         $data['role'] = $data['role'] ?? 'employee';
         $data['salary'] = $data['salary'] ?? 0;
+        $data['tax_category'] = $data['tax_category'] ?? 'general';
         $data['portal_login'] = $portalLogin;
         $data['weekly_off'] = $request->input('weekly_off', []);
 
@@ -533,7 +540,9 @@ class AdminController extends Controller
             'department' => 'required|string',
             'job_title' => 'required|string',
             'role' => 'required|in:employee,manager',
-            'join_date' => 'required|date',
+            'join_date' => 'nullable|date',
+            'tax_category' => 'required|in:general,woman,senior,disabled,freedom_fighter',
+            'tin' => 'nullable|string|max:20',
             'status' => 'required|in:Active,Inactive',
         ]);
 
@@ -552,42 +561,32 @@ class AdminController extends Controller
         return view('admin.employee-edit', compact('employee', 'lastPayslip'));
     }
 
-    public function prepareSettlement(User $employee): View
+    public function prepareSettlement(User $employee, SettlementService $settlements): View
     {
         if ($employee->role === 'admin') {
             return back()->with('error', 'Cannot settle an admin account.');
         }
 
-        $lastPayslip = Payslip::where('user_id', $employee->id)->orderByDesc('year')->orderByDesc('month_num')->first();
-        $yearsOfService = $employee->join_date ? round($employee->join_date->floatDiffInYears(now()), 2) : 0;
-        $latestAppliedIncrement = Increment::where('user_id', $employee->id)
-            ->where('status', 'Applied')
-            ->orderByDesc('effective_date')
-            ->orderByDesc('id')
-            ->first();
-
-        $lastIncrementPct = $latestAppliedIncrement?->increment_pct ?? 0;
-        $baseSalary = $employee->salary;
-        $finalSalary = round($baseSalary * (1 + $lastIncrementPct / 100), 2);
-        $basic = round($finalSalary * 0.6, 2);
-        $pfEmployee = round($basic * 0.12, 2);
-        $tds = round($finalSalary * 0.08, 2);
-        $leaveDays = LeaveRequest::where('user_id', $employee->id)
-            ->where('status', 'Approved')
-            ->whereYear('from_date', now()->year)
-            ->sum('days');
-        $leaveEncashment = round(max(0, 12 - $leaveDays) * ($employee->salary / 26), 2);
-        $outstandingLoan = Loan::where('user_id', $employee->id)->where('status', 'Active')->sum('outstanding');
-        $netSettlement = max(0, $finalSalary + $leaveEncashment - $pfEmployee - $tds - $outstandingLoan);
+        $calc = $settlements->calculate($employee);
+        $lastPayslip = $calc['last_payslip'];
+        $yearsOfService = $calc['years_of_service'];
+        $lastIncrementPct = $calc['last_increment_pct'];
+        $leaveEncashment = $calc['leave_encashment'];
+        $outstandingLoan = $calc['outstanding_loan'];
+        $finalSalary = $calc['final_salary'];
+        $pfEmployee = $calc['pf_employee'];
+        $tds = $calc['tds'];
+        $gratuity = $calc['gratuity'];
+        $netSettlement = $calc['net_settlement'];
 
         return view('admin.employee-settlement', compact(
             'employee', 'lastPayslip', 'yearsOfService', 'lastIncrementPct',
             'leaveEncashment', 'outstandingLoan', 'finalSalary', 'pfEmployee',
-            'tds', 'netSettlement'
+            'tds', 'gratuity', 'netSettlement'
         ));
     }
 
-    public function finalizeSettlement(Request $request, User $employee)
+    public function finalizeSettlement(Request $request, User $employee, SettlementService $settlements)
     {
         if ($employee->role === 'admin') {
             return back()->with('error', 'Cannot settle an admin account.');
@@ -597,43 +596,7 @@ class AdminController extends Controller
             return back()->with('error', 'Settlement already completed or employee is inactive.');
         }
 
-        $yearsOfService = $employee->join_date ? round($employee->join_date->floatDiffInYears(now()), 2) : 0;
-        $latestAppliedIncrement = Increment::where('user_id', $employee->id)
-            ->where('status', 'Applied')
-            ->orderByDesc('effective_date')
-            ->orderByDesc('id')
-            ->first();
-
-        $lastIncrementPct = $latestAppliedIncrement?->increment_pct ?? 0;
-        $baseSalary = $latestAppliedIncrement ? $latestAppliedIncrement->current_salary : $employee->salary;
-        $finalSalary = round($baseSalary * (1 + $lastIncrementPct / 100), 2);
-        $basic = round($finalSalary * 0.6, 2);
-        $pfEmployee = round($basic * 0.12, 2);
-        $tds = round($finalSalary * 0.08, 2);
-        $leaveDays = LeaveRequest::where('user_id', $employee->id)
-            ->where('status', 'Approved')
-            ->whereYear('from_date', now()->year)
-            ->sum('days');
-        $leaveEncashment = round(max(0, 12 - $leaveDays) * ($employee->salary / 26), 2);
-        $outstandingLoan = Loan::where('user_id', $employee->id)->where('status', 'Active')->sum('outstanding');
-        $netSettlement = max(0, $finalSalary + $leaveEncashment - $pfEmployee - $tds - $outstandingLoan);
-
-        Settlement::create([
-            'user_id' => $employee->id,
-            'exit_date' => today(),
-            'last_basic' => $baseSalary,
-            'years_of_service' => $yearsOfService,
-            'leave_encashment' => $leaveEncashment,
-            'last_increment_pct' => $lastIncrementPct,
-            'pf_employee' => $pfEmployee,
-            'tds' => $tds,
-            'final_month_salary' => $finalSalary,
-            'outstanding_loan' => $outstandingLoan,
-            'net_settlement' => $netSettlement,
-            'status' => 'Initiated',
-        ]);
-
-        $employee->update(['status' => 'Inactive']);
+        $settlements->finalize($employee);
 
         AuditLog::create([
             'action' => 'Employee Removed',
@@ -706,10 +669,12 @@ class AdminController extends Controller
         return back()->with('success', 'Increment applied for '.$employee->name.'.');
     }
 
-    public function payroll(): View
+    public function payroll(Request $request): View
     {
+        $year = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', now()->month);
         $employees = User::where('role', '!=', 'admin')->where('status', 'Active')->get();
-        $payslips = Payslip::with('user')->where('month_num', 7)->where('year', 2025)->get();
+        $payslips = Payslip::with('user')->where('month_num', $month)->where('year', $year)->get();
 
         $applied = Increment::whereIn('user_id', $employees->pluck('id'))
             ->where('status', 'Applied')
@@ -723,105 +688,75 @@ class AdminController extends Controller
             $employee->id => $applied->get($employee->id)?->increment_pct ?? 10,
         ])->toArray();
 
-        return view('admin.payroll', compact('employees', 'payslips', 'employeeIncrements'));
+        $periodLabel = Carbon::create($year, $month, 1)->format('M Y');
+
+        return view('admin.payroll', compact('employees', 'payslips', 'employeeIncrements', 'year', 'month', 'periodLabel'));
     }
 
-    public function processPayroll(Request $request)
+    public function processPayroll(Request $request, PayrollService $payroll)
     {
         $data = $request->validate([
+            'year' => 'required|integer|min:2020|max:2100',
+            'month' => 'required|integer|min:1|max:12',
             'increment_pct' => 'required|array',
             'increment_pct.*' => 'required|numeric|min:10|max:100',
         ]);
 
         $employees = User::where('role', '!=', 'admin')->where('status', 'Active')->get();
-        $appliedIncrements = Increment::whereIn('user_id', $employees->pluck('id'))
-            ->where('status', 'Applied')
-            ->orderByDesc('effective_date')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('user_id')
-            ->keyBy('user_id');
-
-        $count = 0;
-
         foreach ($employees as $emp) {
-            $latestApplied = $appliedIncrements->get($emp->id);
             $yearsOfService = $emp->join_date ? $emp->join_date->floatDiffInYears(today()) : 0;
+            $latestApplied = Increment::where('user_id', $emp->id)->where('status', 'Applied')
+                ->orderByDesc('effective_date')->orderByDesc('id')->first();
             $defaultPct = $latestApplied?->increment_pct ?? 10;
             $requestedPct = $data['increment_pct'][$emp->id] ?? $defaultPct;
-
-            if ($yearsOfService < 1 && $requestedPct != $defaultPct) {
+            if ($yearsOfService < 1 && (float) $requestedPct != (float) $defaultPct) {
                 return back()->with('error', 'Cannot change increment for '.$emp->name.' before completing 1 year of service.');
             }
-
-            $incrementPct = $requestedPct;
-            $baseSalary = $latestApplied ? $latestApplied->current_salary : $emp->salary;
-            $salaryForPayroll = round($baseSalary * (1 + $incrementPct / 100), 2);
-            $basic = round($salaryForPayroll * 0.6, 2);
-            $hra = round($salaryForPayroll * 0.2, 2);
-            $da = round($salaryForPayroll * 0.1, 2);
-            $allowances = round($salaryForPayroll * 0.1, 2);
-            $gross = $basic + $hra + $da + $allowances;
-            $pfEmp = round($basic * 0.12, 2);
-            $pfEr = round($basic * 0.12, 2);
-            $tds = round($gross * 0.08, 2);
-            $loan = (float) Loan::where('user_id', $emp->id)->where('status', 'Active')->sum('emi');
-            $net = max(0, $gross - $pfEmp - $tds - $loan);
-
-            Payslip::updateOrCreate(
-                ['user_id' => $emp->id, 'year' => 2025, 'month_num' => 7],
-                [
-                    'month' => 'Jul 2025',
-                    'basic' => $basic,
-                    'hra' => $hra,
-                    'da' => $da,
-                    'allowances' => $allowances,
-                    'overtime_pay' => 0,
-                    'gross' => $gross,
-                    'tds' => $tds,
-                    'pf_employee' => $pfEmp,
-                    'pf_employer' => $pfEr,
-                    'loan_deduction' => $loan,
-                    'other_deductions' => 0,
-                    'net' => $net,
-                    'status' => 'Generated',
-                ]
-            );
-
-            if ($yearsOfService >= 1 && (! $latestApplied || $latestApplied->increment_pct != $incrementPct)) {
-                Increment::create([
-                    'code' => 'IN'.str_pad((string) (Increment::max('id') + 1), 3, '0', STR_PAD_LEFT),
-                    'user_id' => $emp->id,
-                    'current_salary' => $baseSalary,
-                    'increment_pct' => $incrementPct,
-                    'new_salary' => round($baseSalary * (1 + $incrementPct / 100), 2),
-                    'effective_date' => today(),
-                    'reason' => 'Payroll increment rate applied',
-                    'status' => 'Applied',
-                ]);
-            }
-
-            $count++;
         }
 
+        $count = $payroll->processMonth((int) $data['year'], (int) $data['month'], $data['increment_pct'], Auth::id());
+        $label = Carbon::create((int) $data['year'], (int) $data['month'], 1)->format('M Y');
+
         AuditLog::create([
-            'action' => 'Payroll Processed',
+            'action' => 'Payroll Prepared',
             'module' => 'Payroll',
             'user_name' => Auth::user()->name,
             'role' => 'Admin',
-            'details' => "Jul 2025 payroll processed for {$count} employees.",
+            'details' => "{$label} payroll prepared for {$count->employee_count} employees — pending approval.",
             'severity' => 'info',
             'logged_at' => now(),
         ]);
 
-        return back()->with('success', "Payroll processed for {$count} employees.");
+        return redirect()->route('admin.payroll', ['year' => $data['year'], 'month' => $data['month']])
+            ->with('success', "Payroll prepared for {$count->employee_count} employees ({$label}). Awaiting maker-checker approval.");
     }
 
-    public function taxPf(): View
+    public function taxPf(TaxService $tax, PfService $pf): View
     {
         $employees = User::where('role', '!=', 'admin')->where('status', 'Active')->with('payslips')->get();
+        $slabs = $tax->slabSummary('general');
+        $pfRates = $pf->rates();
+        $categories = TaxService::categoryOptions();
+        $taxRows = $employees->map(function (User $e) use ($tax, $pf, $categories) {
+            $basic = round((float) $e->salary * 0.6, 2);
+            $b = $tax->breakdownForUser($e);
 
-        return view('admin.taxpf', compact('employees'));
+            return [
+                'name' => $e->name,
+                'category' => $categories[$b['category']] ?? $b['category'],
+                'tin' => $e->tin,
+                'annual' => $b['annual_income'],
+                'employment_deduction' => $b['employment_deduction'],
+                'taxable' => $b['assessable_income'],
+                'tax_free' => $b['tax_free_limit'],
+                'annual_tax' => $b['annual_tax'],
+                'monthly_tds' => $b['monthly_tds'],
+                'pf_employee' => $pf->employeeContribution($basic),
+                'pf_employer' => $pf->employerContribution($basic),
+            ];
+        });
+
+        return view('admin.taxpf', compact('employees', 'slabs', 'pfRates', 'taxRows', 'categories'));
     }
 
     public function loans(): View
@@ -874,25 +809,11 @@ class AdminController extends Controller
         return view('admin.bonus', compact('bonuses', 'increments', 'employees'));
     }
 
-    public function storeFestivalBonus(Request $request)
+    public function storeFestivalBonus(Request $request, PayrollService $payroll)
     {
-        User::where('role', '!=', 'admin')->where('status', 'Active')->get()->each(function ($employee) {
-            $yearsOfService = $employee->join_date ? $employee->join_date->floatDiffInYears(today()) : 0;
-            $basic = round($employee->salary * 0.6, 2);
-            $rate = $yearsOfService >= 1 ? 0.5 : 0.25;
+        $count = $payroll->generateFestivalBonuses();
 
-            Bonus::create([
-                'code' => 'FB'.str_pad((string) (Bonus::max('id') + 1), 3, '0', STR_PAD_LEFT),
-                'user_id' => $employee->id,
-                'basic' => $basic,
-                'years_of_service' => round($yearsOfService, 2),
-                'festival_bonus' => round($basic * $rate, 2),
-                'performance_bonus' => 0,
-                'status' => 'Pending',
-            ]);
-        });
-
-        return back()->with('success', 'Festival bonus calculated for all active employees.');
+        return back()->with('success', "Festival bonus calculated for {$count} active employees.");
     }
 
     public function updateBonusStatus(Request $request, Bonus $bonus)
@@ -944,10 +865,19 @@ class AdminController extends Controller
         return back()->with('success', 'Reply sent and query resolved.');
     }
 
-    public function reports(): View
+    public function reports(Request $request): View
     {
-        $payrollTotal = Payslip::where('year', 2025)->where('month_num', 7)->sum('net');
+        $year = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', now()->month);
+
+        $payrollTotal = Payslip::where('year', $year)->where('month_num', $month)->sum('net');
+        $tdsTotal = Payslip::where('year', $year)->where('month_num', $month)->sum('tds');
+        $pfTotal = Payslip::where('year', $year)->where('month_num', $month)->sum('pf_employee');
         $loanOutstanding = Loan::where('status', 'Active')->sum('outstanding');
+        $loanDeducted = Payslip::where('year', $year)->where('month_num', $month)->sum('loan_deduction');
+        $bonusTotal = Bonus::where('status', '!=', 'Pending')->sum('festival_bonus');
+        $settlementTotal = Settlement::sum('net_settlement');
+        $queryCount = HrQuery::count();
         $byDept = User::where('role', '!=', 'admin')
             ->selectRaw('department, count(*) as total, sum(salary) as salary_cost')
             ->groupBy('department')
@@ -955,8 +885,13 @@ class AdminController extends Controller
 
         $inquiries = SiteInquiry::with('product')->latest()->limit(20)->get();
         $products = Product::orderBy('sort_order')->get();
+        $periodLabel = Carbon::create($year, $month, 1)->format('M Y');
 
-        return view('admin.reports', compact('payrollTotal', 'loanOutstanding', 'byDept', 'inquiries', 'products'));
+        return view('admin.reports', compact(
+            'payrollTotal', 'loanOutstanding', 'byDept', 'inquiries', 'products',
+            'tdsTotal', 'pfTotal', 'loanDeducted', 'bonusTotal', 'settlementTotal',
+            'queryCount', 'year', 'month', 'periodLabel'
+        ));
     }
 
     public function products(): View

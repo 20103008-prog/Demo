@@ -50,7 +50,13 @@
                         </div>
                         <p class="small mt-2 mb-0">{{ $q->description }}</p>
                         @if($q->ai_draft)
-                            <div class="alert alert-info py-2 small mt-2 mb-0"><strong>AI suggestion:</strong> {{ $q->ai_draft }}</div>
+                            <div class="alert alert-info py-2 small mt-2 mb-0">
+                                <strong>AI draft</strong>
+                                @if($q->ai_confidence)
+                                    <span class="badge text-bg-secondary">{{ round($q->ai_confidence * 100) }}%</span>
+                                @endif
+                                : {{ $q->ai_draft }}
+                            </div>
                         @endif
                         @if($q->response)
                             <div class="alert alert-success py-2 small mt-2 mb-0"><strong>HR reply:</strong> {{ $q->response }}</div>

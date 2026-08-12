@@ -3,8 +3,12 @@
 @section('content')
 <div class="row g-3 mb-4">
     <div class="col-md-3">@include('components.kpi', ['title'=>'Today Status','value'=>$today?->status ?? 'Not punched','sub'=>$today?->check_in ? 'In '.$today->check_in : 'Punch to start','icon'=>'bi-clock','color'=>'primary'])</div>
+    <div class="col-md-3">@include('components.kpi', ['title'=>'Attendance %','value'=>$attendancePct.'%','sub'=>'This month','icon'=>'bi-graph-up','color'=>'success'])</div>
+    <div class="col-md-3">@include('components.kpi', ['title'=>'Latest Net Pay','value'=>$latestPayslip ? inr($latestPayslip->net) : '—','sub'=>$latestPayslip?->month,'icon'=>'bi-cash','color'=>'info'])</div>
+    <div class="col-md-3">@include('components.kpi', ['title'=>'Loan Outstanding','value'=>inr($loanOutstanding),'icon'=>'bi-credit-card','color'=>'warning'])</div>
+</div>
+<div class="row g-3 mb-4">
     <div class="col-md-3">@include('components.kpi', ['title'=>'Pending Leaves','value'=>$pendingLeaves,'icon'=>'bi-calendar3','color'=>'warning'])</div>
-    <div class="col-md-3">@include('components.kpi', ['title'=>'Latest Net Pay','value'=>$latestPayslip ? inr($latestPayslip->net) : '—','sub'=>$latestPayslip?->month,'icon'=>'bi-cash','color'=>'success'])</div>
     <div class="col-md-3">@include('components.kpi', ['title'=>'Open Queries','value'=>$openQueries,'icon'=>'bi-chat-dots','color'=>'info'])</div>
 </div>
 

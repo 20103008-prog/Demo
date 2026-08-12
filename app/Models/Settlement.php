@@ -9,7 +9,7 @@ class Settlement extends Model
 {
     protected $fillable = [
         'user_id', 'exit_date', 'last_basic', 'years_of_service',
-        'leave_encashment', 'last_increment_pct', 'pf_employee', 'tds',
+        'gratuity', 'leave_encashment', 'last_increment_pct', 'pf_employee', 'tds',
         'final_month_salary', 'outstanding_loan', 'net_settlement', 'status',
     ];
 
@@ -19,6 +19,7 @@ class Settlement extends Model
             'exit_date' => 'date',
             'last_basic' => 'decimal:2',
             'years_of_service' => 'decimal:2',
+            'gratuity' => 'decimal:2',
             'leave_encashment' => 'decimal:2',
             'last_increment_pct' => 'decimal:2',
             'pf_employee' => 'decimal:2',

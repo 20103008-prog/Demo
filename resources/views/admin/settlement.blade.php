@@ -6,7 +6,7 @@
     <div class="table-responsive">
         <table class="table mb-0 align-middle">
             <thead class="table-light">
-                <tr><th>Employee</th><th>Exit</th><th>Years</th><th>Increment</th><th>Final Salary</th><th>PF</th><th>TDS</th><th>Leave Encash</th><th>Loan</th><th>Net</th><th>Status</th><th></th></tr>
+                <tr><th>Employee</th><th>Exit</th><th>Years</th><th>Increment</th><th>Final Salary</th><th>Gratuity</th><th>PF</th><th>TDS</th><th>Leave Encash</th><th>Loan</th><th>Net</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
             @foreach($settlements as $s)
@@ -16,6 +16,7 @@
                     <td>{{ $s->years_of_service }}</td>
                     <td>{{ $s->last_increment_pct }}%</td>
                     <td>{{ inr($s->final_month_salary) }}</td>
+                    <td>{{ inr($s->gratuity ?? 0) }}</td>
                     <td>{{ inr($s->pf_employee) }}</td>
                     <td>{{ inr($s->tds) }}</td>
                     <td>{{ inr($s->leave_encashment) }}</td>

@@ -2,17 +2,37 @@
 
 namespace App\Support;
 
+use App\Models\Holiday;
+use App\Models\PayrollSetting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class HolidayCalendar
 {
     public static function weekendDays(): array
     {
+        if (Schema::hasTable('payroll_settings')) {
+            $raw = PayrollSetting::getValue('weekend_days', null);
+            if ($raw !== null && $raw !== '') {
+                return array_map('intval', array_filter(explode(',', (string) $raw), 'strlen'));
+            }
+        }
+
         return config('holidays.weekend_days', [5]);
     }
 
     public static function holidayDates(): array
     {
+        if (Schema::hasTable('holidays')) {
+            $db = Holiday::active()->get()->mapWithKeys(
+                fn (Holiday $h) => [$h->date->toDateString() => $h->name]
+            )->all();
+
+            if (! empty($db)) {
+                return $db;
+            }
+        }
+
         return config('holidays.dates', []);
     }
 

@@ -14,36 +14,56 @@
     $nav = match($role) {
         'admin' => [
             ['Dashboard', 'admin.dashboard', 'bi-speedometer2'],
+            ['Analytics', 'admin.analytics', 'bi-graph-up-arrow'],
+            ['Companies', 'admin.companies', 'bi-buildings'],
             ['Employees', 'admin.employees', 'bi-people'],
             ['Roster / Duty', 'admin.roster', 'bi-calendar-range'],
+            ['Shift Swaps', 'admin.swaps', 'bi-arrow-left-right'],
             ['Payroll', 'admin.payroll', 'bi-cash-stack'],
-            ['Tax & PF', 'admin.taxpf', 'bi-percent'],
+            ['Payroll Approvals', 'admin.payroll.approvals', 'bi-shield-check'],
+            ['Bank Advice', 'admin.bank.advice', 'bi-bank2'],
+            ['Tax & PF (NBR)', 'admin.taxpf', 'bi-percent'],
+            ['Investments', 'admin.investments', 'bi-piggy-bank'],
             ['Loans', 'admin.loans', 'bi-credit-card'],
             ['Bonus & Increment', 'admin.bonus', 'bi-award'],
+            ['Appraisals', 'admin.appraisals', 'bi-clipboard-data'],
+            ['Leave Policies', 'admin.leave.policies', 'bi-journal-text'],
+            ['Documents', 'admin.documents', 'bi-folder'],
+            ['Biometrics', 'admin.biometrics', 'bi-fingerprint'],
             ['Settlement', 'admin.settlement', 'bi-bank'],
             ['AI Queries', 'admin.queries', 'bi-robot'],
             ['Products', 'admin.products', 'bi-box-seam'],
             ['Inquiries', 'admin.inquiries', 'bi-envelope'],
             ['Reports', 'admin.reports', 'bi-file-earmark-bar-graph'],
-            ['Audit Logs', 'admin.audit', 'bi-shield-check'],
+            ['Audit Logs', 'admin.audit', 'bi-shield-lock'],
         ],
         'manager' => [
             ['Dashboard', 'manager.dashboard', 'bi-speedometer2'],
             ['My Team', 'manager.team', 'bi-people'],
-            ['Attendance', 'employee.attendance', 'bi-clock'],
+            ['Team Attendance', 'manager.attendance', 'bi-people-fill'],
+            ['My Attendance', 'employee.attendance', 'bi-clock'],
             ['Leave', 'employee.leave', 'bi-calendar3'],
+            ['Overtime Request', 'employee.overtime', 'bi-hourglass'],
+            ['Documents', 'employee.documents', 'bi-folder'],
+            ['Investments', 'employee.investments', 'bi-piggy-bank'],
             ['Payroll', 'employee.payroll', 'bi-cash'],
             ['Queries', 'employee.queries', 'bi-chat-dots'],
             ['Leave Approvals', 'manager.leaves', 'bi-check2-square'],
-            ['Overtime', 'manager.overtime', 'bi-stopwatch'],
+            ['OT Approvals', 'manager.overtime', 'bi-stopwatch'],
             ['Reports', 'manager.reports', 'bi-bar-chart'],
         ],
         default => [
             ['Dashboard', 'employee.dashboard', 'bi-speedometer2'],
             ['Attendance', 'employee.attendance', 'bi-clock'],
             ['Leave', 'employee.leave', 'bi-calendar3'],
+            ['Overtime', 'employee.overtime', 'bi-hourglass'],
+            ['Shift Swap', 'employee.swaps', 'bi-arrow-left-right'],
+            ['Documents', 'employee.documents', 'bi-folder'],
+            ['Investments', 'employee.investments', 'bi-piggy-bank'],
+            ['Appraisals', 'employee.appraisals', 'bi-clipboard-data'],
             ['Payroll', 'employee.payroll', 'bi-cash'],
             ['Queries', 'employee.queries', 'bi-chat-dots'],
+            ['2FA Security', 'employee.twofactor', 'bi-shield-lock'],
         ],
     };
     $roleLabel = match($role) {
@@ -98,6 +118,14 @@
                 <i class="bi bi-list"></i>
             </button>
             <h1 class="h6 mb-0 fw-semibold text-secondary flex-grow-1">@yield('title', 'Dashboard')</h1>
+
+            <form method="POST" action="{{ route('locale.set') }}" class="me-2">
+                @csrf
+                <select name="locale" class="form-select form-select-sm" onchange="this.form.submit()" style="width:auto">
+                    <option value="en" @selected(app()->getLocale()==='en')>EN</option>
+                    <option value="bn" @selected(app()->getLocale()==='bn')>বাংলা</option>
+                </select>
+            </form>
 
             <div class="dropdown me-2">
                 <button class="btn btn-sm btn-light d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">

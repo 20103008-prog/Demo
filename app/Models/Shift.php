@@ -18,6 +18,8 @@ class Shift extends Model
         'break_minutes',
         'ot_starts_after',
         'is_overnight',
+        'is_night',
+        'night_differential_pct',
     ];
 
     protected function casts(): array
@@ -27,6 +29,8 @@ class Shift extends Model
             'break_minutes' => 'integer',
             'ot_starts_after' => 'integer',
             'is_overnight' => 'boolean',
+            'is_night' => 'boolean',
+            'night_differential_pct' => 'decimal:2',
         ];
     }
 

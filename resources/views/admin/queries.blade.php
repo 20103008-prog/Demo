@@ -13,7 +13,18 @@
         </div>
         <p class="small mt-2">{{ $q->description }}</p>
         @if($q->ai_draft)
-            <div class="alert alert-info small py-2">{{ $q->ai_draft }}</div>
+            <div class="alert alert-info small py-2">
+                <strong>AI Draft</strong>
+                @if($q->ai_confidence)
+                    <span class="badge text-bg-secondary">{{ round($q->ai_confidence * 100) }}% · {{ $q->ai_category }}</span>
+                @endif
+                @if($q->needs_manual_review)
+                    <span class="badge text-bg-warning">Needs manual review</span>
+                @endif
+                <div class="mt-1">{{ $q->ai_draft }}</div>
+            </div>
+        @elseif($q->needs_manual_review)
+            <div class="alert alert-warning small py-2">Low AI confidence — manual review required.</div>
         @endif
         @if($q->status === 'Pending')
             <form method="POST" action="{{ route('admin.queries.reply', $q) }}">
