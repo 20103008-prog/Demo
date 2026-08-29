@@ -35,18 +35,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Demo credential role picker on login
-    document.querySelectorAll('[data-demo-role]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const email = btn.getAttribute('data-email');
-            const password = btn.getAttribute('data-password');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            if (emailInput) emailInput.value = email || '';
-            if (passwordInput) passwordInput.value = password || '';
-            document.querySelectorAll('[data-demo-role]').forEach((b) => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
+    // Leave / swap: keep "to" date on or after "from" date
+    document.querySelectorAll('[data-date-range-from]').forEach((fromInput) => {
+        const toInput = document.querySelector(fromInput.getAttribute('data-date-range-from'));
+        if (!toInput) return;
+        const sync = () => {
+            if (!fromInput.value) return;
+            toInput.min = fromInput.value;
+            if (toInput.value && toInput.value < fromInput.value) {
+                toInput.value = fromInput.value;
+            }
+        };
+        fromInput.addEventListener('change', sync);
+        sync();
     });
 
     // Chart helpers from data attributes

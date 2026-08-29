@@ -60,6 +60,7 @@
                 ['My Attendance', 'employee.attendance', 'bi-clock'],
                 ['Leave', 'employee.leave', 'bi-calendar3'],
                 ['Overtime Request', 'employee.overtime', 'bi-hourglass'],
+                ['Shift Swap', 'employee.swaps', 'bi-arrow-left-right'],
                 ['Documents', 'employee.documents', 'bi-folder'],
                 ['Investments', 'employee.investments', 'bi-piggy-bank'],
                 ['Payroll', 'employee.payroll', 'bi-cash'],
@@ -98,11 +99,11 @@
 <div class="app-shell">
     <aside class="sidebar" id="appSidebar">
         <div class="sidebar-brand">
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3 min-w-0">
                 <div class="logo-box"><i class="bi bi-briefcase text-white"></i></div>
-                <div>
-                    <div class="fw-bold small text-white lh-1">HR Payroll</div>
-                    <div class="text-uppercase" style="font-size:10px;color:#93c5fd;letter-spacing:.06em;">{{ $roleLabel }}</div>
+                <div class="min-w-0 overflow-hidden">
+                    <div class="fw-bold small text-white lh-1 text-truncate">HR Payroll</div>
+                    <div class="text-uppercase text-truncate" style="font-size:10px;color:#93c5fd;letter-spacing:.06em;">{{ $roleLabel }}</div>
                 </div>
             </div>
         </div>
@@ -110,15 +111,17 @@
             @foreach($navGroups as $group => $items)
                 <div class="sidebar-section-label">{{ $group }}</div>
                 @foreach($items as [$label, $route, $icon])
+                    @if(\Illuminate\Support\Facades\Route::has($route))
                     <a href="{{ route($route) }}" class="nav-link {{ request()->routeIs($route) ? 'active' : '' }}">
                         <i class="bi {{ $icon }}"></i>
                         <span>{{ $label }}</span>
                     </a>
+                    @endif
                 @endforeach
             @endforeach
         </nav>
         <div class="sidebar-user">
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 min-w-0">
                 <span class="avatar-circle" style="background:{{ auth()->user()->avatarColor() }}">{{ auth()->user()->initials() }}</span>
                 <div class="flex-grow-1 overflow-hidden">
                     <div class="text-white small fw-semibold text-truncate">{{ auth()->user()->name }}</div>
@@ -236,5 +239,6 @@
         </div>
     </div>
 </div>
+@stack('scripts')
 </body>
 </html>

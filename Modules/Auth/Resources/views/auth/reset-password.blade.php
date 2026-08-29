@@ -1,31 +1,26 @@
 @extends('layouts.guest')
 @section('title', 'Reset password')
 @section('content')
-<div class="text-center mb-4">
-    <h1 class="h4 text-white fw-bold">Set new password</h1>
-</div>
-<div class="card login-card">
-    <div class="card-body p-4">
-        @if($errors->any())
-            <div class="alert alert-danger small py-2">{{ $errors->first() }}</div>
-        @endif
-        <form method="POST" action="{{ route('password.store') }}">
-            @csrf
-            <input type="hidden" name="token" value="{{ $request->route('token') }}">
-            <div class="mb-3">
-                <label class="form-label small fw-semibold" for="email">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email', $request->email) }}" required class="form-control bg-light border-0">
-            </div>
-            <div class="mb-3">
-                <label class="form-label small fw-semibold" for="password">New password</label>
-                <input id="password" type="password" name="password" required class="form-control bg-light border-0">
-            </div>
-            <div class="mb-3">
-                <label class="form-label small fw-semibold" for="password_confirmation">Confirm password</label>
-                <input id="password_confirmation" type="password" name="password_confirmation" required class="form-control bg-light border-0">
-            </div>
-            <button class="btn btn-primary w-100">Reset Password</button>
-        </form>
+<h1 class="h4 fw-bold mb-1">Set a new password</h1>
+<p class="text-muted small mb-4">Choose a password you have not used on this portal before.</p>
+@if($errors->any())
+    <div class="alert alert-danger small py-2">{{ $errors->first() }}</div>
+@endif
+<form method="POST" action="{{ route('password.store') }}">
+    @csrf
+    <input type="hidden" name="token" value="{{ $request->route('token') }}">
+    <div class="mb-3">
+        <label class="form-label" for="email">Work email</label>
+        <input id="email" type="email" name="email" value="{{ old('email', $request->email) }}" required autocomplete="username" class="form-control">
     </div>
-</div>
+    <div class="mb-3">
+        <label class="form-label" for="password">New password</label>
+        <input id="password" type="password" name="password" required autocomplete="new-password" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="password_confirmation">Confirm password</label>
+        <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="form-control">
+    </div>
+    <button class="btn btn-primary w-100 py-2">Update password</button>
+</form>
 @endsection

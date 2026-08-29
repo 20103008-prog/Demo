@@ -91,6 +91,14 @@ class ManagerAttendanceController extends Controller
 
     public function reviewOvertime(Request $request, OvertimeRequest $overtime)
     {
+        $overtime->loadMissing('user');
+        if (! $overtime->user || $overtime->user->department !== Auth::user()->department) {
+            abort(403, 'You can only review overtime for your own team.');
+        }
+        if ($overtime->status !== 'Pending') {
+            return back()->with('error', 'This overtime request has already been reviewed.');
+        }
+
         $data = $request->validate(['status' => 'required|in:Approved,Rejected']);
         $overtime->update(['status' => $data['status']]);
 

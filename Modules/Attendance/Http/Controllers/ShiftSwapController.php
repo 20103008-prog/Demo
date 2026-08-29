@@ -56,6 +56,7 @@ class ShiftSwapController extends Controller
             ->latest()->get();
         $colleagues = User::where('department', Auth::user()->department)
             ->where('id', '!=', Auth::id())
+            ->whereIn('role', ['employee', 'manager'])
             ->where('status', 'Active')->orderBy('name')->get();
 
         return view('employee.shift-swaps', compact('swaps', 'colleagues'));
@@ -63,14 +64,42 @@ class ShiftSwapController extends Controller
 
     public function storeShiftSwap(Request $request)
     {
+        $user = Auth::user();
+
         $data = $request->validate([
             'target_user_id' => 'required|exists:users,id',
-            'date' => 'required|date',
+            'date' => 'required|date|after_or_equal:today',
             'reason' => 'nullable|string|max:1000',
+        ], [
+            'date.after_or_equal' => 'Shift swap cannot be requested for a past date.',
         ]);
+
+        if ((int) $data['target_user_id'] === (int) $user->id) {
+            return back()->withErrors(['target_user_id' => 'You cannot swap a shift with yourself.'])->withInput();
+        }
+
+        $target = User::where('id', $data['target_user_id'])
+            ->where('department', $user->department)
+            ->where('status', 'Active')
+            ->whereIn('role', ['employee', 'manager'])
+            ->first();
+
+        if (! $target) {
+            return back()->withErrors(['target_user_id' => 'You can only swap with an active colleague in your department.'])->withInput();
+        }
+
+        $duplicate = ShiftSwapRequest::where('requester_id', $user->id)
+            ->whereDate('date', $data['date'])
+            ->where('status', 'Pending')
+            ->exists();
+
+        if ($duplicate) {
+            return back()->withErrors(['date' => 'You already have a pending swap for this date.'])->withInput();
+        }
+
         ShiftSwapRequest::create([
-            'requester_id' => Auth::id(),
-            'target_user_id' => $data['target_user_id'],
+            'requester_id' => $user->id,
+            'target_user_id' => $target->id,
             'date' => $data['date'],
             'reason' => $data['reason'] ?? null,
             'status' => 'Pending',

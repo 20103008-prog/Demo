@@ -24,4 +24,5 @@ Route::middleware(['auth', 'role:employee,manager'])->prefix('employee')->name('
 
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/reports', [ManagerReportController::class, 'reports'])->name('reports');
+    Route::get('/reports/export', [ManagerReportController::class, 'export'])->name('reports.export');
 });

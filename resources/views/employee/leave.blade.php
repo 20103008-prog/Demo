@@ -17,30 +17,38 @@
                         <label class="form-label small">Type</label>
                         <select name="type" class="form-select" required>
                             @foreach(['Casual','Sick','Earned','Compensatory','Unpaid'] as $t)
-                                <option>{{ $t }}</option>
+                                <option @selected(old('type')===$t)>{{ $t }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">From</label>
-                        <input type="date" name="from_date" class="form-control" required>
+                        <input type="date" name="from_date" class="form-control"
+                            min="{{ today()->toDateString() }}"
+                            value="{{ old('from_date') }}"
+                            data-date-range-from="input[name=to_date]"
+                            required>
+                        <div class="form-text">Past dates are disabled. Apply only for today or later.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">To</label>
-                        <input type="date" name="to_date" class="form-control" required>
-                        <div class="form-text text-muted">Leave cannot include weekends/holidays from the holiday calendar.</div>
+                        <input type="date" name="to_date" class="form-control"
+                            min="{{ today()->toDateString() }}"
+                            value="{{ old('to_date') }}"
+                            required>
+                        <div class="form-text text-muted">Weekends and holidays are skipped unless sandwich rule applies.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Reason</label>
-                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                        <textarea name="reason" class="form-control" rows="3" required>{{ old('reason') }}</textarea>
                     </div>
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="is_half_day" value="1" id="half">
+                        <input class="form-check-input" type="checkbox" name="is_half_day" value="1" id="half" @checked(old('is_half_day'))>
                         <label class="form-check-label" for="half">Half-day leave</label>
                     </div>
                     <select name="half_day_session" class="form-select mb-3">
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
+                        <option value="AM" @selected(old('half_day_session')==='AM')>AM</option>
+                        <option value="PM" @selected(old('half_day_session')==='PM')>PM</option>
                     </select>
                     <button class="btn btn-primary w-100">Submit Request</button>
                 </form>

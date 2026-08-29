@@ -24,6 +24,12 @@ class ManagerLeaveController extends Controller
 
     public function reviewLeave(Request $request, LeaveRequest $leave)
     {
+        $this->assertTeamLeave($leave);
+
+        if ($leave->status !== 'Pending') {
+            return back()->with('error', 'This leave request has already been reviewed.');
+        }
+
         $data = $request->validate([
             'status' => 'required|in:Approved,Rejected',
             'review_comment' => 'nullable|string|max:500',
@@ -51,12 +57,24 @@ class ManagerLeaveController extends Controller
 
     public function bulkApproveLeaves(Request $request)
     {
-        $ids = $request->validate(['ids' => 'required|array'])['ids'];
-        LeaveRequest::whereIn('id', $ids)->where('status', 'Pending')->update([
-            'status' => 'Approved',
-            'reviewed_by' => Auth::id(),
-        ]);
+        $ids = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer'])['ids'];
+        LeaveRequest::whereIn('id', $ids)
+            ->where('status', 'Pending')
+            ->whereHas('user', fn ($q) => $q->where('department', Auth::user()->department))
+            ->update([
+                'status' => 'Approved',
+                'reviewed_by' => Auth::id(),
+            ]);
 
         return back()->with('success', 'Selected leaves approved.');
+    }
+
+    protected function assertTeamLeave(LeaveRequest $leave): void
+    {
+        $leave->loadMissing('user');
+
+        if (! $leave->user || $leave->user->department !== Auth::user()->department) {
+            abort(403, 'You can only review leave for your own team.');
+        }
     }
 }

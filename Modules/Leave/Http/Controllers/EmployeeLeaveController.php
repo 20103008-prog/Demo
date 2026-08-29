@@ -35,16 +35,28 @@ class EmployeeLeaveController extends Controller
     {
         $data = $request->validate([
             'type' => 'required|in:Casual,Sick,Earned,Compensatory,Unpaid',
-            'from_date' => 'required|date',
+            'from_date' => 'required|date|after_or_equal:today',
             'to_date' => 'required|date|after_or_equal:from_date',
             'reason' => 'required|string|max:1000',
             'is_half_day' => 'nullable|boolean',
             'half_day_session' => 'nullable|in:AM,PM',
+        ], [
+            'from_date.after_or_equal' => 'Leave can only be requested for today or a future date.',
         ]);
 
-        $from = Carbon::parse($data['from_date']);
-        $to = Carbon::parse($data['to_date']);
+        $from = Carbon::parse($data['from_date'])->startOfDay();
+        $to = Carbon::parse($data['to_date'])->startOfDay();
         $halfDay = $request->boolean('is_half_day');
+
+        $overlap = LeaveRequest::where('user_id', Auth::id())
+            ->whereIn('status', ['Pending', 'Approved'])
+            ->whereDate('from_date', '<=', $to)
+            ->whereDate('to_date', '>=', $from)
+            ->exists();
+
+        if ($overlap) {
+            return back()->withErrors(['from_date' => 'You already have a pending or approved leave covering these dates.'])->withInput();
+        }
 
         if ($halfDay && ! $from->equalTo($to)) {
             return back()->withErrors(['from_date' => 'Half-day leave must be a single date.'])->withInput();
